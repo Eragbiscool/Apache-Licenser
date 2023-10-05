@@ -8,8 +8,9 @@ functionality_counter = 0
 program_number = 0
 project_number_error = 0
 expection = 0
+language_counter = 0
 
-argparser = argparse.ArgumentParser(description='Description:\n This script adds **license initials** all the files mentioned in the **file_list path**. It takes some of the information from the user to make the initials more informative. But most of the arguments are optional. The only required argument is the **-filelist_path** where you will have to put the path of the filelist. For the license itself, please open LICENSE file came with this script.')
+argparser = argparse.ArgumentParser(description='Description:\n This script adds **license initials** all the files mentioned in the **file_list path**. It takes some of the information from the user to make the initials more informative. But most of the arguments are optional. Required argument is the **-filelist_path** where you will have to put the path of the filelist and **-language** where you will have to put the languages for each of the files. For the license itself, please open LICENSE file came with this script.')
 
 
 argparser.add_argument("-filelist_path",type=str,help="Put the path of the filelist here",required=True)
@@ -17,7 +18,9 @@ argparser.add_argument("-company_name",type=str,help="Put the company or organiz
 argparser.add_argument("-project_name",type=str,help="Put the project name here in quotation, if nothing is put, then a default project name will be written", nargs='*')
 argparser.add_argument("-developer_name",type=str,help="Put the Developer's name here in quotation one by one, if nothing is inserted, then **None** will be shown",nargs='*')
 argparser.add_argument("-functionality",type=str,help="Write something about this in a very gist form",nargs='*')
-argparser.add_argument('-program_name_norepeat',action='store_false',help="Type true if you need the program name mentioned in **-program_name** switch to repeat to all the files mentioned in **filelist**")
+argparser.add_argument('-project_name_norepeat',action='store_false',help="If you want this switch to work, then just mention this switch as **-project_name_norepeat** with other switches")
+argparser.add_argument('-language',type=str,help="Consists of coding language used in the file. For each files, write the relevant language in a quotation "" using comma between all the languages. Use it something like this: -language 'python,java' 'verilog,system-verilog'",nargs='+',required=True)
+
 args = argparser.parse_args()
 
 
@@ -28,13 +31,14 @@ def license_write(f):
     global program_number
     global file_lines
     global project_number_error
+    global language_counter
     
     
    
     
     try:
         import pyfiglet
-        if(args.program_name_norepeat==True):
+        if(args.project_name_norepeat==True):
             T = args.project_name[0]
             ASCII_art_1 = pyfiglet.figlet_format(T)
             lines = ASCII_art_1.split("\n")
@@ -52,7 +56,7 @@ def license_write(f):
             f.write('*' * len(longest_line)+"*/")
             program_number = program_number + 1
     except:
-            if(args.program_name_norepeat==True):
+            if(args.project_name_norepeat==True):
                 T=args.project_name[0]
                 f.write("\n/*"+'*' * len(T)+"\n")
                 f.write(T)
@@ -106,6 +110,17 @@ def license_write(f):
     else:
         f.write("\n\n\t\t***None***\n\n")
 
+    f.write("\nLanguages Used:"+"\n")
+
+    
+
+    if(args.language):
+        f.write('''
+        {}'''.format(args.language[language_counter]+"\n"))
+        language_counter = language_counter + 1
+    else:
+        f.write("\n\n\t\t***None***\n\n")
+
     f.write("\n*********************************************************/\n\n")
 
 
@@ -120,30 +135,45 @@ file_lines= f.readlines()
 try:
     project_number_zero = 0
     project_number_big = 0
+    project_number_big_norepeat = 0
     project_number_small = 0
     functionality_number_big = 0
     functionality_number_less = 0
-    if(args.program_name_norepeat==True):
-        if args.project_name is None:
-            project_number_zero = 1
-            raise Exception
+    language_number_big = 0
+    language_number_less = 0
+
+    
+    
+        
+    if args.project_name is None:
+        project_number_zero = 1
+        raise Exception
     else:
-        if args.project_name is None:
-            project_number_zero = 1
-            raise Exception
+        
+        if(args.project_name_norepeat==True):
+            if(len(args.project_name)>1):
+                project_number_big_norepeat = 1
+                raise Exception
         else:
+            
             if(len(args.project_name)>len(file_lines)):
                 project_number_big = 1
                 raise Exception
             elif(len(args.project_name)<len(file_lines)):
                 project_number_small = 1
                 raise Exception
-            elif(len(args.functionality)>len(args.project_name)):
-                functionality_number_big = 1
-                raise Exception
-            elif(len(args.functionality)<len(args.project_name)):
-                functionality_number_less = 1
-                raise Exception
+        if(len(args.functionality)>len(file_lines)):
+            functionality_number_big = 1
+            raise Exception
+        elif(len(args.functionality)<len(file_lines)):
+            functionality_number_less = 1
+            raise Exception
+        elif(len(args.language)>len(file_lines)):
+            language_number_big = 1
+            raise Exception
+        elif(len(args.language)<len(file_lines)):
+            language_number_less = 1
+            raise Exception
             
 except:
         expection = 1
@@ -158,6 +188,12 @@ except:
                 print("Error: You have inserted more functionality than expected, please remove unnecessary functionality that you have defined through arguments and Run again")
             elif(functionality_number_less==1):
                 print("Error: You have inserted less functionality than expected")
+            elif(language_number_less==1):
+                print("Error: You have not inserted languages for all the files in the filelist.")
+            elif(language_number_big==1):
+                print("Error: You have inserted more languages than the number of files in the filelist.")
+            elif(project_number_big_norepeat==1):
+                print("Error: You have inserted more than one project for no_repeat operation. If you want repeat operation for project name, then keep only one project name. If you dont want repeat operation then use '-project_name_norepeat' as switch in the argument")   
 
 
 try:
