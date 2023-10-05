@@ -1,75 +1,181 @@
+import re
 import argparse
 import datetime
 from datetime import datetime
 
-argparser = argparse.ArgumentParser()
+print_counter = 0
+functionality_counter = 0
+program_number = 0
+project_number_error = 0
+expection = 0
+
+argparser = argparse.ArgumentParser(description='Description:\n This script adds **license initials** all the files mentioned in the **file_list path**. It takes some of the information from the user to make the initials more informative. But most of the arguments are optional. The only required argument is the **-filelist_path** where you will have to put the path of the filelist. For the license itself, please open LICENSE file came with this script.')
 
 
-
-argparser.add_argument("-company_name",type=str,help="Put the company or organization name here in quotation, if nothing is put, then a default company name will be written",default="Your Company Name")
-argparser.add_argument("-project_name",type=str,help="Put the project name here in quotation, if nothing is put, then a default project name will be written",default="THE SIGNAL PROCESSOR")
+argparser.add_argument("-filelist_path",type=str,help="Put the path of the filelist here",required=True)
+argparser.add_argument("-company_name",type=str,help="Put the company or organization name here in quotation, if nothing is put, then a default company name will be written",default="<Your Company Name>")
+argparser.add_argument("-project_name",type=str,help="Put the project name here in quotation, if nothing is put, then a default project name will be written", nargs='*')
 argparser.add_argument("-developer_name",type=str,help="Put the Developer's name here in quotation one by one, if nothing is inserted, then **None** will be shown",nargs='*')
 argparser.add_argument("-functionality",type=str,help="Write something about this in a very gist form",nargs='*')
+argparser.add_argument('-program_name_norepeat',action='store_false',help="Type true if you need the program name mentioned in **-program_name** switch to repeat to all the files mentioned in **filelist**")
 args = argparser.parse_args()
 
 
 
-f=open('Path of the file you want to license','r+')
-file_lines= f.readlines()
-f.seek(0) 
+def license_write(f):
+    global print_counter
+    global functionality_counter
+    global program_number
+    global file_lines
+    global project_number_error
+    
+    
+   
+    
+    try:
+        import pyfiglet
+        if(args.program_name_norepeat==True):
+            T = args.project_name[0]
+            ASCII_art_1 = pyfiglet.figlet_format(T)
+            lines = ASCII_art_1.split("\n")
+            longest_line = max(lines, key=len)
+            f.write("\n/*"+'*' * len(longest_line)+"\n")
+            f.write(ASCII_art_1+"\n")
+            f.write('*' * len(longest_line)+"*/")
+        else:
+            T = args.project_name[program_number]
+            ASCII_art_1 = pyfiglet.figlet_format(T)
+            lines = ASCII_art_1.split("\n")
+            longest_line = max(lines, key=len)
+            f.write("\n/*"+'*' * len(longest_line)+"\n")
+            f.write(ASCII_art_1+"\n")
+            f.write('*' * len(longest_line)+"*/")
+            program_number = program_number + 1
+    except:
+            if(args.program_name_norepeat==True):
+                T=args.project_name[0]
+                f.write("\n/*"+'*' * len(T)+"\n")
+                f.write(T)
+                f.write("\n"+'*' * len(T)+"*/")
+            else:
+                T=args.project_name[program_number]
+                f.write("\n/*"+'*' * len(T)+"\n")
+                f.write(T)
+                f.write("\n"+'*' * len(T)+"*/")
+                program_number = program_number + 1
+            if(print_counter == 0):
+                print("For magic, run this command in your terminal *pip install pyfiglet*. This will install a package which will help you with a better visuals")
+            print_counter = 1
 
-try:
-    import pyfiglet
-    T = args.project_name
-    ASCII_art_1 = pyfiglet.figlet_format(T)
-    lines = ASCII_art_1.split("\n")
-    longest_line = max(lines, key=len)
-    f.write("\n/*"+'*' * len(longest_line)+"\n")
-    f.write(ASCII_art_1+"\n")
-    f.write('*' * len(longest_line)+"*/")
-except:
-    f.write("\n/*"+'*' * len(longest_line)+"\n")
-    f.write("SPU_LEO_8000")
-    f.write('*' * len(longest_line)+"*/")
 
+    lic ='''\n\n/*
+    SPDX-License-Identifier: Apache-2.0
+    Copyright {} {} or its affiliates
 
-lic ='''\n\n/*
-SPDX-License-Identifier: Apache-2.0
-Copyright {} {} or its affiliates
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
 
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License\n
 */\n\n'''.format(datetime.now().year, args.company_name)
 
 
 
-lines = lic.split("\n")
-longest_line = max(lines, key=len)
-f.write(lic)
-f.write("/*********************************************************\n")
-f.write('''functionality:\n
-    {}'''.format(args.functionality[0]+"\n\n"))
-f.write("Developers :"+"\n")
-if(args.developer_name):
-    for i in range(len(args.developer_name)):
-        f.write('''
-    {}'''.format("\t"+args.developer_name[i]+"\n"))
-else:
-    f.write("\n\n\t***None***\n\n")
+    lines = lic.split("\n")
+    longest_line = max(lines, key=len)
+    f.write(lic)
+    f.write("/*********************************************************\n")
+    if(args.functionality):
+        f.write('''functionality:\n
+        {}'''.format(args.functionality[functionality_counter]+"\n\n"))
+        functionality_counter = functionality_counter +1
+    else:
+        f.write("functionality:\n\n\t\t***None***\n\n")
 
-f.write("\n*********************************************************/\n\n")
+    f.write("Developers :"+"\n")
+    if(args.developer_name):
+        for i in range(len(args.developer_name)):
+            f.write('''
+        {}'''.format(args.developer_name[i]+"\n"))
+    else:
+        f.write("\n\n\t\t***None***\n\n")
 
-for line in file_lines:
-    f.write(line)
+    f.write("\n*********************************************************/\n\n")
+
+
+
+
+
+f=open(args.filelist_path,'r')
+file_lines= f.readlines()
+
+
+
+try:
+    project_number_zero = 0
+    project_number_big = 0
+    project_number_small = 0
+    functionality_number_big = 0
+    functionality_number_less = 0
+    if(args.program_name_norepeat==True):
+        if args.project_name is None:
+            project_number_zero = 1
+            raise Exception
+    else:
+        if args.project_name is None:
+            project_number_zero = 1
+            raise Exception
+        else:
+            if(len(args.project_name)>len(file_lines)):
+                project_number_big = 1
+                raise Exception
+            elif(len(args.project_name)<len(file_lines)):
+                project_number_small = 1
+                raise Exception
+            elif(len(args.functionality)>len(args.project_name)):
+                functionality_number_big = 1
+                raise Exception
+            elif(len(args.functionality)<len(args.project_name)):
+                functionality_number_less = 1
+                raise Exception
+            
+except:
+        expection = 1
+        if(project_number_zero == 1):
+            print("Error: You have not inserted any project name")
+        else:
+            if(project_number_big == 1):
+                print("Error: You might have inserted more project name than expected")
+            elif(project_number_small ==1):
+                print("Error: You might have inserted less number of project names than expected")
+            elif(functionality_number_big==1):
+                print("Error: You have inserted more functionality than expected, please remove unnecessary functionality that you have defined through arguments and Run again")
+            elif(functionality_number_less==1):
+                print("Error: You have inserted less functionality than expected")
+
+
+try:
+    if(expection==0):
+        for i in file_lines:
+            j=re.split("[\n]",i)[0]
+            files = open(j, 'r+')
+            read_line = files.readlines()
+            files.seek(0) 
+            license_write(files)
+            for line in read_line:
+                files.write(line)
+            files.close()
+    else:
+        raise Exception
+except:
+    pass
+    
 
 
 f.close()
