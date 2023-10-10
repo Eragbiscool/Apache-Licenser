@@ -1,6 +1,7 @@
 import re
 import argparse
 import datetime
+import urllib.parse
 from datetime import datetime
 
 print_counter = 0
@@ -9,19 +10,30 @@ program_number = 0
 project_number_error = 0
 expection = 0
 language_counter = 0
+dev_name_email_counter = 0
+formatted_email = []
 
 argparser = argparse.ArgumentParser(description='Description:\n This script adds **license initials** all the files mentioned in the **file_list path**. It takes some of the information from the user to make the initials more informative. But most of the arguments are optional. Required argument is the **-filelist_path** where you will have to put the path of the filelist and **-language** where you will have to put the languages for each of the files. For the license itself, please open LICENSE file came with this script.')
 
 
 argparser.add_argument("-filelist_path",type=str,help="Put the path of the filelist here",required=True)
 argparser.add_argument("-company_name",type=str,help="Put the company or organization name here in quotation, if nothing is put, then a default company name will be written",default="<Your Company Name>")
+argparser.add_argument("-company_website",type=str,help="Put the company or organization website here in quotation, if nothing is put, then just keep it empty",default="")
 argparser.add_argument("-project_name",type=str,help="Put the project name here in quotation, if nothing is put, then a default project name will be written", nargs='*')
-argparser.add_argument("-developer_name",type=str,help="Put the Developer's name here in quotation one by one, if nothing is inserted, then **None** will be shown",nargs='*')
+argparser.add_argument("-developer_name",type=str,help="Put the Developer's name here in quotation one by one with space in between. If you have multiple dev in one project, then write their name with comma and then close it in quote. This switch is **required**",required=True,nargs='+')
+argparser.add_argument("-developer_email",type=str,help="Put the Developer's name here in quotation one by one, This switch is **required**",required=True,nargs='+')
 argparser.add_argument("-functionality",type=str,help="Write something about this in a very gist form",nargs='*')
 argparser.add_argument('-project_name_norepeat',action='store_false',help="If you want this switch to work, then just mention this switch as **-project_name_norepeat** with other switches")
 argparser.add_argument('-language',type=str,help="Consists of coding language used in the file. For each files, write the relevant language in a quotation "" using comma between all the languages. Use it something like this: -language 'python,java' 'verilog,system-verilog'",nargs='+',required=True)
 
 args = argparser.parse_args()
+
+if(args.company_website != ""):
+    website_url = args.company_website
+    formatted_website = urllib.parse.quote_plus(website_url)
+else:
+    formatted_website = ""
+
 
 
 
@@ -32,6 +44,8 @@ def license_write(f):
     global file_lines
     global project_number_error
     global language_counter
+    global dev_name_email_counter
+
     
     
    
@@ -74,7 +88,7 @@ def license_write(f):
 
     lic ='''\n\n/*
     SPDX-License-Identifier: Apache-2.0
-    Copyright {} {} or its affiliates
+    Copyright {} {} {} or its affiliates
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -87,9 +101,8 @@ def license_write(f):
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License\n
-*/\n\n'''.format(datetime.now().year, args.company_name)
-
-
+*/\n\n'''.format(datetime.now().year, args.company_name,"<"+formatted_website+">")
+    
 
     lines = lic.split("\n")
     longest_line = max(lines, key=len)
@@ -103,12 +116,22 @@ def license_write(f):
         f.write("functionality:\n\n\t\t***None***\n\n")
 
     f.write("Developers :"+"\n")
-    if(args.developer_name):
-        for i in range(len(args.developer_name)):
+
+
+    
+    try:
+        for j in range(len(args.developer_name[dev_name_email_counter].split(","))):
             f.write('''
-        {}'''.format(args.developer_name[i]+"\n"))
-    else:
-        f.write("\n\n\t\t***None***\n\n")
+    {} <Email: {}'''.format(args.developer_name[dev_name_email_counter].split(",")[j],args.developer_email[dev_name_email_counter].split(",")[j]+">\n"))
+        dev_name_email_counter = dev_name_email_counter + 1
+    except:
+            f.write('''
+    {} Email: {}'''.format(args.developer_name[dev_name_email_counter].split(",")[j-1],args.developer_email[dev_name_email_counter].split(",")[j-1]+">\n"))
+            dev_name_email_counter = dev_name_email_counter + 1
+            pass
+    
+    
+
 
     f.write("\nLanguages Used:"+"\n")
 
@@ -162,18 +185,29 @@ try:
             elif(len(args.project_name)<len(file_lines)):
                 project_number_small = 1
                 raise Exception
-        if(len(args.functionality)>len(file_lines)):
-            functionality_number_big = 1
-            raise Exception
-        elif(len(args.functionality)<len(file_lines)):
-            functionality_number_less = 1
-            raise Exception
-        elif(len(args.language)>len(file_lines)):
-            language_number_big = 1
-            raise Exception
-        elif(len(args.language)<len(file_lines)):
-            language_number_less = 1
-            raise Exception
+            
+        if args.functionality is None:
+            pass
+        else: 
+            if(len(args.functionality)>len(file_lines)):
+                functionality_number_big = 1
+                raise Exception
+            elif(len(args.functionality)<len(file_lines)):
+                functionality_number_less = 1
+                raise Exception
+            else:
+                pass
+        if args.language is None:
+            pass
+        else: 
+            if(len(args.language)>len(file_lines)):
+                language_number_big = 1
+                raise Exception
+            elif(len(args.language)<len(file_lines)):
+                language_number_less = 1
+                raise Exception
+            else:
+                pass
             
 except:
         expection = 1
@@ -212,6 +246,10 @@ try:
 except:
     pass
     
+
+
+
+
 
 
 f.close()
